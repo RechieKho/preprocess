@@ -3,36 +3,16 @@ use std::{borrow::Cow, char, collections::VecDeque};
 use crate::{exception::Exception, token::Token};
 
 const INITIAL_CAPACITY: usize = 16;
-const COMMENCEMENT_CHARACTER: char = '$';
-const NEWLINE_CHARACTER: char = '\n';
-const STRING_QUOTE_CHARACTER: char = '\'';
-const OPEN_BRACKET_CHARACTER: char = '(';
-const CLOSE_BRACKET_CHARACTER: char = ')';
+
+pub const COMMENCEMENT_CHARACTER: char = '$';
+pub const NEWLINE_CHARACTER: char = '\n';
+pub const STRING_QUOTE_CHARACTER: char = '\'';
+pub const OPEN_BRACKET_CHARACTER: char = '(';
+pub const CLOSE_BRACKET_CHARACTER: char = ')';
 
 pub trait Executor<'text> {
     fn get_value(&mut self, character: char) -> String;
     fn call(&mut self, arguments: &VecDeque<Token<'text>>) -> String;
-}
-
-pub struct DefaultExecutor {}
-
-impl<'text> Executor<'text> for DefaultExecutor {
-    fn call(&mut self, arguments: &VecDeque<Token<'text>>) -> String {
-        let command = arguments.front().unwrap();
-        if command.data == "say_hello" {
-            return "Hello world".to_string();
-        }
-
-        String::default()
-    }
-
-    fn get_value(&mut self, character: char) -> String {
-        if character == COMMENCEMENT_CHARACTER {
-            return COMMENCEMENT_CHARACTER.to_string();
-        }
-
-        String::default()
-    }
 }
 
 impl<'text> dyn Executor<'text> {
