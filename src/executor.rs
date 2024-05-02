@@ -76,7 +76,7 @@ impl<'text> dyn Executor<'text> {
                             let mut arguments: VecDeque<Token<'text>> = VecDeque::with_capacity(16);
 
                             if !token_buffer.is_empty() {
-                                arguments.push_front(Token::<'text> {
+                                callee.push_back(Token::<'text> {
                                     data: token_buffer.clone(),
                                     line,
                                     row,
@@ -85,29 +85,22 @@ impl<'text> dyn Executor<'text> {
                                 token_buffer.clear();
                             }
 
-                            // TODO: There might be a better way to do this (https://users.rust-lang.org/t/best-way-to-drop-range-of-elements-from-front-of-vecdeque/31795).
-                            loop {
-                                let argument = callee.pop_back();
-                                if argument.is_none() {
-                                    return Err(Exception {
-                                        message: Cow::Borrowed("Excess closing bracket."),
-                                        token: Token::<'text> {
-                                            data: character.to_string(),
-                                            line,
-                                            row,
-                                            column,
-                                        },
-                                    });
-                                }
-                                let argument = argument.unwrap();
-                                let mut open_bracket_character_str_buffer = [0u8; 4];
-                                let open_bracket_character_str = OPEN_BRACKET_CHARACTER
-                                    .encode_utf8(&mut open_bracket_character_str_buffer);
-                                if argument.data.as_str() == open_bracket_character_str {
-                                    break;
-                                }
-                                arguments.push_front(argument);
+                            let position = callee
+                                .iter()
+                                .rposition(|token| token == &OPEN_BRACKET_CHARACTER);
+                            if position.is_none() {
+                                return Err(Exception {
+                                    message: Cow::Borrowed("Excess closing bracket."),
+                                    token: Token::<'text> {
+                                        data: character.to_string(),
+                                        line,
+                                        row,
+                                        column,
+                                    },
+                                });
                             }
+                            let position = position.unwrap();
+                            arguments.extend(callee.drain(position..).skip(1));
 
                             if arguments.is_empty() {
                                 return Err(Exception {

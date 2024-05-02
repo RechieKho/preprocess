@@ -6,7 +6,7 @@ mod token;
 
 fn main() {
     let mut executor: Box<dyn Executor> = Box::new(DefaultExecutor {});
-    let result = executor.execute("$(say_hello) $$");
+    let result = executor.execute("$(say_hello 1 2 3) $$");
 
     match result {
         Err(exception) => {
