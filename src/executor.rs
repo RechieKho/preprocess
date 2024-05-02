@@ -11,8 +11,12 @@ pub const OPEN_BRACKET_CHARACTER: char = '(';
 pub const CLOSE_BRACKET_CHARACTER: char = ')';
 
 pub trait Executor<'text> {
-    fn get_value(&mut self, character: char) -> String;
-    fn call(&mut self, arguments: &VecDeque<Token<'text>>) -> String;
+    fn get_value(&mut self, character: char) -> Result<String, Exception<'text>>;
+    fn call(
+        &mut self,
+        head: Token<'text>,
+        body: VecDeque<Token<'text>>,
+    ) -> Result<String, Exception<'text>>;
 }
 
 impl<'text> dyn Executor<'text> {
@@ -39,7 +43,7 @@ impl<'text> dyn Executor<'text> {
                             break 'commencing;
                         }
 
-                        let output = self.get_value(character);
+                        let output = self.get_value(character)?;
                         if tokens.is_empty() {
                             result.push_str(&output);
                         } else {
@@ -115,7 +119,9 @@ impl<'text> dyn Executor<'text> {
                                 });
                             }
 
-                            let output = self.call(&arguments);
+                            let head = arguments.pop_front().unwrap();
+
+                            let output = self.call(head, arguments)?;
                             if tokens.is_empty() {
                                 result.push_str(&output);
                             } else {
