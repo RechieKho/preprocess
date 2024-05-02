@@ -100,8 +100,10 @@ impl<'text> dyn Executor<'text> {
                                     });
                                 }
                                 let argument = argument.unwrap();
-                                // TODO: Please don't do excess allocation.
-                                if &argument.data == &OPEN_BRACKET_CHARACTER.to_string() {
+                                let mut open_bracket_character_str_buffer = [0u8; 4];
+                                let open_bracket_character_str = OPEN_BRACKET_CHARACTER
+                                    .encode_utf8(&mut open_bracket_character_str_buffer);
+                                if argument.data.as_str() == open_bracket_character_str {
                                     break;
                                 }
                                 arguments.push_front(argument);
