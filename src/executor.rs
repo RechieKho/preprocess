@@ -199,6 +199,13 @@ impl<'text> dyn Executor<'text> {
             result.push(NEWLINE_CHARACTER);
         }
 
+        if !tokens.is_empty() {
+            return Err(Exception {
+                message: Cow::Borrowed("Unterminated bracket."),
+                token: tokens.pop_back().unwrap(),
+            });
+        }
+
         Ok(result)
     }
 }
