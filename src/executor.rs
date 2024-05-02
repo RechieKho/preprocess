@@ -60,7 +60,16 @@ impl<'text> dyn Executor<'text> {
                         }
 
                         let output = self.get_value(character);
-                        result.push_str(&output);
+                        if tokens.is_empty() {
+                            result.push_str(&output);
+                        } else {
+                            tokens.push_back(Token::<'text> {
+                                data: output,
+                                line,
+                                row,
+                                column,
+                            })
+                        }
                     }
                     is_commencing = false;
                     continue;
@@ -73,6 +82,16 @@ impl<'text> dyn Executor<'text> {
 
                 if !tokens.is_empty() {
                     'collecting_tokens: {
+                        if character == OPEN_BRACKET_CHARACTER {
+                            tokens.push_back(Token::<'text> {
+                                data: character.to_string(),
+                                line,
+                                row,
+                                column,
+                            });
+                            break 'collecting_tokens;
+                        }
+
                         if character == CLOSE_BRACKET_CHARACTER {
                             let mut arguments: VecDeque<Token<'text>> =
                                 VecDeque::with_capacity(INITIAL_CAPACITY);
@@ -117,7 +136,16 @@ impl<'text> dyn Executor<'text> {
                             }
 
                             let output = self.call(&arguments);
-                            result.push_str(&output);
+                            if tokens.is_empty() {
+                                result.push_str(&output);
+                            } else {
+                                tokens.push_back(Token::<'text> {
+                                    data: output,
+                                    line,
+                                    row,
+                                    column,
+                                });
+                            }
                             break 'collecting_tokens;
                         }
 
