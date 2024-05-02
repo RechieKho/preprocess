@@ -2,6 +2,7 @@ use std::{borrow::Cow, char, collections::VecDeque};
 
 use crate::{exception::Exception, token::Token};
 
+const INITIAL_CAPACITY: usize = 16;
 const COMMENCEMENT_CHARACTER: char = '$';
 const NEWLINE_CHARACTER: char = '\n';
 const STRING_QUOTE_CHARACTER: char = '\'';
@@ -37,9 +38,9 @@ impl<'text> Executor<'text> for DefaultExecutor {
 impl<'text> dyn Executor<'text> {
     pub fn execute(&mut self, text: &'text str) -> Result<String, Exception<'text>> {
         let mut result = String::with_capacity(text.len());
-        let mut callee: VecDeque<Token<'text>> = VecDeque::with_capacity(16);
+        let mut tokens: VecDeque<Token<'text>> = VecDeque::with_capacity(INITIAL_CAPACITY);
 
-        let mut token_buffer = String::with_capacity(16);
+        let mut token_data_buffer = String::with_capacity(INITIAL_CAPACITY);
 
         for (row, line) in text.split(NEWLINE_CHARACTER).enumerate() {
             let mut is_commencing = false;
@@ -49,7 +50,7 @@ impl<'text> dyn Executor<'text> {
                 if is_commencing {
                     'commencing: {
                         if character == OPEN_BRACKET_CHARACTER {
-                            callee.push_back(Token::<'text> {
+                            tokens.push_back(Token::<'text> {
                                 data: character.to_string(),
                                 line,
                                 row,
@@ -70,22 +71,23 @@ impl<'text> dyn Executor<'text> {
                     continue;
                 }
 
-                if !callee.is_empty() {
-                    'collecting_callee: {
+                if !tokens.is_empty() {
+                    'collecting_tokens: {
                         if character == CLOSE_BRACKET_CHARACTER {
-                            let mut arguments: VecDeque<Token<'text>> = VecDeque::with_capacity(16);
+                            let mut arguments: VecDeque<Token<'text>> =
+                                VecDeque::with_capacity(INITIAL_CAPACITY);
 
-                            if !token_buffer.is_empty() {
-                                callee.push_back(Token::<'text> {
-                                    data: token_buffer.clone(),
+                            if !token_data_buffer.is_empty() {
+                                tokens.push_back(Token::<'text> {
+                                    data: token_data_buffer.clone(),
                                     line,
                                     row,
                                     column,
                                 });
-                                token_buffer.clear();
+                                token_data_buffer.clear();
                             }
 
-                            let position = callee
+                            let position = tokens
                                 .iter()
                                 .rposition(|token| token == &OPEN_BRACKET_CHARACTER);
                             if position.is_none() {
@@ -100,7 +102,7 @@ impl<'text> dyn Executor<'text> {
                                 });
                             }
                             let position = position.unwrap();
-                            arguments.extend(callee.drain(position..).skip(1));
+                            arguments.extend(tokens.drain(position..).skip(1));
 
                             if arguments.is_empty() {
                                 return Err(Exception {
@@ -116,25 +118,25 @@ impl<'text> dyn Executor<'text> {
 
                             let output = self.call(&arguments);
                             result.push_str(&output);
-                            break 'collecting_callee;
+                            break 'collecting_tokens;
                         }
 
                         if is_quoting {
-                            token_buffer.push(character);
+                            token_data_buffer.push(character);
                         } else if character == STRING_QUOTE_CHARACTER {
                             is_quoting = !is_quoting;
                         } else if character.is_whitespace() {
-                            if !token_buffer.is_empty() {
-                                callee.push_back(Token::<'text> {
-                                    data: token_buffer.clone(),
+                            if !token_data_buffer.is_empty() {
+                                tokens.push_back(Token::<'text> {
+                                    data: token_data_buffer.clone(),
                                     line,
                                     row,
                                     column,
                                 });
-                                token_buffer.clear();
+                                token_data_buffer.clear();
                             }
                         } else {
-                            token_buffer.push(character);
+                            token_data_buffer.push(character);
                         }
                     }
 
