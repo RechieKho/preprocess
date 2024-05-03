@@ -135,9 +135,7 @@ impl<'text> dyn Executor<'text> {
                             break 'collecting_tokens;
                         }
 
-                        if is_quoting {
-                            token_data_buffer.push(character);
-                        } else if character == STRING_QUOTE_CHARACTER {
+                        if character == STRING_QUOTE_CHARACTER {
                             if is_quoting {
                                 tokens.push_back(Token::<'text> {
                                     data: token_data_buffer.clone(),
@@ -148,6 +146,8 @@ impl<'text> dyn Executor<'text> {
                                 token_data_buffer.clear();
                             }
                             is_quoting = !is_quoting;
+                        } else if is_quoting {
+                            token_data_buffer.push(character);
                         } else if character.is_whitespace() {
                             if !token_data_buffer.is_empty() {
                                 tokens.push_back(Token::<'text> {
