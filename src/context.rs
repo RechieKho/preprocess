@@ -10,6 +10,9 @@ use self::set::Set;
 
 mod set;
 
+const SPACE_CHARACTER: char = ' ';
+const UNDERSCORE_CHARACTER: char = '_';
+
 type CalleeRegistry<'text> = BTreeMap<&'static str, Box<dyn Callee<'text>>>;
 type Store = BTreeMap<String, String>;
 
@@ -68,8 +71,8 @@ impl<'text> Executor<'text> for Context<'text> {
     fn get(&mut self, character: char) -> Result<String, Exception<'text>> {
         if character == COMMENCEMENT_CHARACTER {
             return Ok(COMMENCEMENT_CHARACTER.to_string());
-        } else if character == '_' {
-            return Ok(" ".to_string());
+        } else if character == UNDERSCORE_CHARACTER {
+            return Ok(SPACE_CHARACTER.to_string());
         }
 
         Ok(String::default())
