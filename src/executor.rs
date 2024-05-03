@@ -4,7 +4,7 @@ use crate::{exception::Exception, token::Token};
 
 const INITIAL_CAPACITY: usize = 16;
 
-pub const COMMENCEMENT_CHARACTER: char = '$';
+pub const COMMENCEMENT_CHARACTER: char = '@';
 pub const NEWLINE_CHARACTER: char = '\n';
 pub const OPEN_BRACKET_CHARACTER: char = '(';
 pub const CLOSE_BRACKET_CHARACTER: char = ')';
