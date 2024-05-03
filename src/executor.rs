@@ -11,7 +11,7 @@ pub const OPEN_BRACKET_CHARACTER: char = '(';
 pub const CLOSE_BRACKET_CHARACTER: char = ')';
 
 pub trait Executor<'text> {
-    fn get_value(&mut self, character: char) -> Result<String, Exception<'text>>;
+    fn get(&mut self, character: char) -> Result<String, Exception<'text>>;
     fn call(
         &mut self,
         head: Token<'text>,
@@ -43,7 +43,7 @@ impl<'text> dyn Executor<'text> {
                             break 'commencing;
                         }
 
-                        let output = self.get_value(character)?;
+                        let output = self.get(character)?;
                         if tokens.is_empty() {
                             result.push_str(&output);
                         } else {
