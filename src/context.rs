@@ -68,6 +68,8 @@ impl<'text> Executor<'text> for Context<'text> {
     fn get(&mut self, character: char) -> Result<String, Exception<'text>> {
         if character == COMMENCEMENT_CHARACTER {
             return Ok(COMMENCEMENT_CHARACTER.to_string());
+        } else if character == '_' {
+            return Ok(" ".to_string());
         }
 
         Ok(String::default())

@@ -6,7 +6,6 @@ const INITIAL_CAPACITY: usize = 16;
 
 pub const COMMENCEMENT_CHARACTER: char = '$';
 pub const NEWLINE_CHARACTER: char = '\n';
-pub const STRING_QUOTE_CHARACTER: char = '\'';
 pub const OPEN_BRACKET_CHARACTER: char = '(';
 pub const CLOSE_BRACKET_CHARACTER: char = ')';
 
@@ -28,7 +27,6 @@ impl<'text> dyn Executor<'text> {
 
         for (row, line) in text.split(NEWLINE_CHARACTER).enumerate() {
             let mut is_commencing = false;
-            let mut is_quoting = false;
 
             for (column, character) in line.char_indices() {
                 if is_commencing {
@@ -135,20 +133,7 @@ impl<'text> dyn Executor<'text> {
                             break 'collecting_tokens;
                         }
 
-                        if character == STRING_QUOTE_CHARACTER {
-                            if is_quoting {
-                                tokens.push_back(Token::<'text> {
-                                    data: token_data_buffer.clone(),
-                                    line,
-                                    row,
-                                    column,
-                                });
-                                token_data_buffer.clear();
-                            }
-                            is_quoting = !is_quoting;
-                        } else if is_quoting {
-                            token_data_buffer.push(character);
-                        } else if character.is_whitespace() {
+                        if character.is_whitespace() {
                             if !token_data_buffer.is_empty() {
                                 tokens.push_back(Token::<'text> {
                                     data: token_data_buffer.clone(),
@@ -172,16 +157,6 @@ impl<'text> dyn Executor<'text> {
             if is_commencing {
                 return Err(Exception {
                     message: Cow::Borrowed("Unterminated commencement character."),
-                    token: Token::<'text> {
-                        data: NEWLINE_CHARACTER.to_string(),
-                        line,
-                        row,
-                        column: line.len() - 1,
-                    },
-                });
-            } else if is_quoting {
-                return Err(Exception {
-                    message: Cow::Borrowed("Unterminated string."),
                     token: Token::<'text> {
                         data: NEWLINE_CHARACTER.to_string(),
                         line,
