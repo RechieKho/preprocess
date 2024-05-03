@@ -138,6 +138,15 @@ impl<'text> dyn Executor<'text> {
                         if is_quoting {
                             token_data_buffer.push(character);
                         } else if character == STRING_QUOTE_CHARACTER {
+                            if is_quoting {
+                                tokens.push_back(Token::<'text> {
+                                    data: token_data_buffer.clone(),
+                                    line,
+                                    row,
+                                    column,
+                                });
+                                token_data_buffer.clear();
+                            }
                             is_quoting = !is_quoting;
                         } else if character.is_whitespace() {
                             if !token_data_buffer.is_empty() {
