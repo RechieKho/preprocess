@@ -1,7 +1,4 @@
-use std::{
-    borrow::Cow,
-    collections::{HashMap, VecDeque},
-};
+use std::collections::{BTreeMap, VecDeque};
 
 use crate::{
     exception::Exception,
@@ -9,82 +6,62 @@ use crate::{
     token::Token,
 };
 
-#[derive(Default)]
-pub struct Context {
-    stack: VecDeque<HashMap<String, String>>,
+use self::set::Set;
+
+mod set;
+
+type CalleeRegistry<'text> = BTreeMap<&'static str, Box<dyn Callee<'text>>>;
+type Store = BTreeMap<String, String>;
+
+pub trait Callee<'text> {
+    fn name(&self) -> &'static str;
+    fn call(
+        &mut self,
+        store: &mut Store,
+        body: VecDeque<Token<'text>>,
+    ) -> Result<String, Exception<'text>>;
 }
 
-impl Context {
-    fn get_current_stack(&mut self) -> &mut HashMap<String, String> {
-        if self.stack.len() == 0 {
-            self.stack.push_back(HashMap::default());
-        }
+pub struct Context<'text> {
+    store: Store,
+    registry: CalleeRegistry<'text>,
+}
 
-        self.stack.back_mut().unwrap()
-    }
-
-    pub fn decl(&mut self, key: String, value: String) {
-        let current_stack = self.get_current_stack();
-        current_stack.insert(key, value);
-    }
-
-    pub fn set(&mut self, key: String, value: String) {
-        let position = self.stack.iter().rposition(|map| map.contains_key(&key));
-        if position.is_none() {
-            self.decl(key, value);
-            return;
-        }
-        let position = position.unwrap();
-        self.stack[position].insert(key, value);
-    }
-
-    pub fn get(&self, key: &String) -> Option<&String> {
-        let position = self.stack.iter().rposition(|map| map.contains_key(key));
-        if position.is_none() {
-            return None;
-        }
-        let position = position.unwrap();
-        return self.stack[position].get(key);
+impl<'text> Context<'text> {
+    pub fn register_callee(&mut self, callee: Box<dyn Callee<'text>>) {
+        self.registry.insert(callee.name(), callee);
     }
 }
 
-impl<'text> Executor<'text> for Context {
+impl<'text> Default for Context<'text> {
+    fn default() -> Self {
+        let mut context = Context::<'text> {
+            store: Store::default(),
+            registry: CalleeRegistry::<'text>::default(),
+        };
+
+        context.register_callee(Box::new(Set::default()));
+
+        context
+    }
+}
+
+impl<'text> Executor<'text> for Context<'text> {
     fn call(
         &mut self,
         head: Token<'text>,
-        mut body: VecDeque<Token<'text>>,
+        body: VecDeque<Token<'text>>,
     ) -> Result<String, Exception<'text>> {
-        if head.data == "decl" {
-            if body.len() != 2 {
-                return Err(Exception {
-                    message: Cow::Borrowed("`decl` expect 2 arguments."),
-                    token: head,
-                });
+        let callee = self.registry.get_mut(head.data.as_str());
+        match callee {
+            None => {
+                let value = self.store.get(head.data.as_str());
+                match value {
+                    None => Ok(String::default()),
+                    Some(value) => Ok(value.clone()),
+                }
             }
-            let key = body.pop_front().unwrap();
-            let value = body.pop_front().unwrap();
-            self.decl(key.data, value.data);
-            return Ok(String::default());
-        }
-
-        if head.data == "set" {
-            if body.len() != 2 {
-                return Err(Exception {
-                    message: Cow::Borrowed("`set` expect 2 arguments."),
-                    token: head,
-                });
-            }
-            let key = body.pop_front().unwrap();
-            let value = body.pop_front().unwrap();
-            self.set(key.data, value.data);
-            return Ok(String::default());
-        }
-
-        let value = self.get(&head.data);
-        if value.is_none() {
-            Ok(String::default())
-        } else {
-            Ok(value.unwrap().clone())
+            Some(callee) => callee.call(&mut self.store, body),
         }
     }
 
