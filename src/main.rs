@@ -7,8 +7,8 @@ mod executor;
 mod token;
 
 fn main() {
-    let mut executor: Box<dyn Executor> = Box::new(Context::default());
-    let result = executor.execute("$(set hello world)$(hello)");
+    let mut context = Context::default();
+    let result = (&mut context as &mut dyn Executor).execute("$(set hello world)$(hello)");
 
     match result {
         Err(exception) => {
