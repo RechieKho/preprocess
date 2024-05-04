@@ -68,7 +68,7 @@ impl<'text> Executor<'text> for Context<'text> {
         }
     }
 
-    fn get(&mut self, character: char) -> Result<String, Exception<'text>> {
+    fn special(&mut self, character: char) -> Result<String, Exception<'text>> {
         if character == COMMENCEMENT_CHARACTER {
             return Ok(COMMENCEMENT_CHARACTER.to_string());
         } else if character == UNDERSCORE_CHARACTER {
