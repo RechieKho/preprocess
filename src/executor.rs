@@ -176,6 +176,8 @@ impl<'text> dyn Executor<'text> {
             });
         }
 
+        result.pop();
+
         Ok(result)
     }
 }

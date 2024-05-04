@@ -26,7 +26,7 @@ pub trait Callee<'text> {
 }
 
 pub struct Context<'text> {
-    store: Store,
+    pub store: Store,
     registry: CalleeRegistry<'text>,
 }
 
@@ -77,4 +77,14 @@ impl<'text> Executor<'text> for Context<'text> {
 
         Ok(String::default())
     }
+}
+
+#[test]
+fn test_replacement_call() {
+    let mut context = Context::default();
+    context
+        .store
+        .insert("hello".to_string(), "world".to_string());
+    let result = (&mut context as &mut dyn Executor).execute("@(hello)");
+    assert_eq!(result.unwrap(), "world".to_string());
 }
