@@ -1,22 +1,26 @@
+use std::{
+    env,
+    io::{self, Read, Write},
+};
+
 use context::Context;
-use executor::Executor;
 
 mod context;
 mod exception;
-mod executor;
 mod token;
 
-fn main() {
-    let mut context = Context::default();
-    let result = (&mut context as &mut dyn Executor)
-        .execute("@(set hello world @_@_@_@_@_@_ asdfasd)@(set goodbye   @(hello))@(goodbye)Man");
+fn main() -> io::Result<()> {
+    let mut input = String::with_capacity(128);
+    io::stdin().read_to_string(&mut input)?;
+    {
+        let mut context = Context::default();
+        context.store.extend(env::vars());
 
-    match result {
-        Err(exception) => {
-            println!("{}", exception.message);
+        let result = context.execute(input.as_str());
+
+        match result {
+            Err(exception) => io::stderr().write_fmt(format_args!("{}", exception.message)),
+            Ok(result) => io::stdout().write_fmt(format_args!("{}", result)),
         }
-        Ok(result) => {
-            println!("{}", result);
-        }
-    };
+    }
 }
