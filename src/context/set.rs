@@ -30,3 +30,11 @@ impl<'text> Callee<'text> for Set {
         Ok(String::default())
     }
 }
+
+#[test]
+fn test_set_call() {
+    let mut context = super::Context::default();
+    let _ = context.execute("@(set hello world)");
+    let result = context.execute("@(hello)");
+    assert_eq!(result.unwrap(), "world".to_string());
+}
