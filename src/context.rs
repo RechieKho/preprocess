@@ -253,3 +253,12 @@ fn test_replacement_call() {
     let result = context.execute("@(hello)");
     assert_eq!(result.unwrap(), "world".to_string());
 }
+
+#[test]
+fn test_specials() {
+    let mut context = Context::default();
+    let result = context.execute("@_");
+    assert_eq!(result.unwrap(), " ".to_string());
+    let result = context.execute("@@");
+    assert_eq!(result.unwrap(), "@".to_string());
+}
